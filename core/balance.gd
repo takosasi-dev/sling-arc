@@ -32,7 +32,7 @@ const GIVEUP_SCORE := 10
 const FAST_FORWARD := 4.0
 const PANEL_GUARD_SEC := 0.5
 const N_COURSES := 100
-const SHARE_URL := ""
+const SHARE_URL := "https://takosasi-dev.github.io/sling-arc/"
 
 # --- コース ---
 const GEN := "SA1"
