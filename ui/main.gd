@@ -50,7 +50,6 @@ func _ready() -> void:
 	sfx = Sfx.new()
 	add_child(sfx)
 	sfx.enabled = save.sound_on()
-	add_child(preload("res://ui/diag.gd").new())  # Phase 2 だけ
 	show_title()
 
 
