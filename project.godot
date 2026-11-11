@@ -12,7 +12,7 @@ config_version=5
 
 config/name="SlingArc"
 config/version="0.1.0"
-run/main_scene="res://ui/title.tscn"
+run/main_scene="res://ui/main.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [display]
@@ -29,4 +29,5 @@ theme/custom_font="res://assets/fonts/NotoSansJP-Variable.ttf"
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.02, 0.03, 0.08, 1)
 renderer/rendering_method.mobile="gl_compatibility"

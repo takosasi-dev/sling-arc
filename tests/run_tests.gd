@@ -10,6 +10,7 @@ const DayIndex := preload("res://core/day_index.gd")
 const RoundState := preload("res://core/round_state.gd")
 const ShareText := preload("res://core/share_text.gd")
 const SaveStore := preload("res://save/save_store.gd")
+const CourseStore := preload("res://core/course_store.gd")
 
 const FONT_PATH := "res://assets/fonts/NotoSansJP-Variable.ttf"
 const STRINGS_PATH := "res://core/strings.gd"
@@ -255,6 +256,85 @@ func test_save_store() -> String:
 	if SaveStore.new(path).tutorial_done():
 		return "version 違いで既定値にならない"
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	return ""
+
+
+# AC-10: 全ホールの solution と ±5 の 9 通りが入る。練習の 2 ホールも入る。
+func test_course_solutions() -> String:
+	var store := CourseStore.load_file()
+	if not store["ok"]:
+		return "courses.json: " + store["error"]
+	for c in store["courses"]:
+		for hi in c["holes"].size():
+			var h: Dictionary = c["holes"][hi]
+			var goal := Sim.make_goal(h["goal"])
+			var planets := Sim.make_planets(h["planets"])
+			for ox in [-5, 0, 5]:
+				for oy in [-5, 0, 5]:
+					var s := Sim.simulate(goal, planets, float(h["solution"][0] + ox), float(h["solution"][1] + oy), B.MAX_STEPS)
+					if s.result != "goal":
+						return "コース %d ホール %d (%+d, %+d): %s" % [c["id"], hi, ox, oy, s.result]
+	var tut := [[0, -450], [220, -600]]
+	for i in 2:
+		var t: Dictionary = B.TUTORIAL_HOLES[i]
+		var s := Sim.simulate(Sim.make_goal(t["goal"]), Sim.make_planets(t["planets"]), float(tut[i][0]), float(tut[i][1]), B.MAX_STEPS)
+		if s.result != "goal":
+			return "練習 T%d: %s" % [i + 1, s.result]
+	return ""
+
+
+# AC-11: courses.json の形と距離の条件。
+func test_course_shape() -> String:
+	var text := FileAccess.get_file_as_string(CourseStore.PATH)
+	var raw = JSON.parse_string(text)
+	if typeof(raw) != TYPE_DICTIONARY or raw["courses"].size() != B.N_COURSES:
+		return "本数が違う"
+	var store := CourseStore.parse(text)  # 形・整数・physics は course_store が検査する
+	if not store["ok"]:
+		return store["error"]
+	for c in store["courses"]:
+		for hi in c["holes"].size():
+			var h: Dictionary = c["holes"][hi]
+			var g: Array = h["goal"]
+			if g[0] < 140 or g[0] > 580 or g[1] < 150 or g[1] > 330:
+				return "コース %d ホール %d: ゴールが範囲外" % [c["id"], hi]
+			var placed := []
+			for p in h["planets"]:
+				var r: int = p[2]
+				if _d2(p, [B.PAD_X, B.PAD_Y]) < (r + 140) * (r + 140):
+					return "コース %d ホール %d: 発射台に近い" % [c["id"], hi]
+				if _d2(p, g) < (r + int(B.GOAL_R) + 60) * (r + int(B.GOAL_R) + 60):
+					return "コース %d ホール %d: ゴールに近い" % [c["id"], hi]
+				for q in placed:
+					if _d2(p, q) < (r + q[2] + 50) * (r + q[2] + 50):
+						return "コース %d ホール %d: 惑星どうしが近い" % [c["id"], hi]
+				placed.append(p)
+	return ""
+
+
+static func _d2(a: Array, b: Array) -> float:
+	var dx := float(a[0]) - float(b[0])
+	var dy := float(a[1]) - float(b[1])
+	return dx * dx + dy * dy
+
+
+# AC-18: 壊れた・本数の足りない・physics の違う courses.json でエラーを返し、落ちない。
+func test_course_store_errors() -> String:
+	var good := FileAccess.get_file_as_string(CourseStore.PATH)
+	var cases := {
+		"壊れた JSON": "{ not json",
+		"本数が足りない": good.replace('"courses": [', '"courses": [ ] , "x": ['),
+		"physics が違う": good.replace('"surface_g": 6000', '"surface_g": 6001'),
+		"ホールが足りない": good.replace('{ "id": 0, "holes": [', '{ "id": 0, "holes": [ ], "h": ['),
+	}
+	for k in cases:
+		var r := CourseStore.parse(cases[k])
+		if r["ok"]:
+			return k + " を読めてしまった"
+	if not CourseStore.parse(good)["ok"]:
+		return "正しい物が読めない"
+	if CourseStore.load_file("res://data/_none.json")["ok"]:
+		return "無いファイルを読めてしまった"
 	return ""
 
 
