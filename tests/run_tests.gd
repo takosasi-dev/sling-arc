@@ -259,6 +259,29 @@ func test_save_store() -> String:
 	return ""
 
 
+# Web の置き場: localStorage に無い時は v0.1.0 の user:// のファイルを読み、user:// には書かない。
+# ここ(Web でない)では localStorage が使えないので、書き込みは失敗を返すだけで止まらない。
+func test_save_store_web_reads_legacy_file_only() -> String:
+	var path := "user://_test_save_web.json"
+	var old := '{"version": 1, "tutorial_done": true, "sound_on": false, "daily": {"2026-11-01": {"course_id": 5, "attempts": 2, "first_total": 12, "first_holes": [3, 2, 3, 2, 2]}}}'
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_string(old)
+	f.close()
+	var s := SaveStore.new(path)
+	s._web = true
+	s.load_data()
+	if not s.tutorial_done() or s.sound_on() or s.attempts("2026-11-01") != 2:
+		return "v0.1.0 のファイルを読めない: " + str(s.data)
+	if s.save_data():
+		return "Web でないのに localStorage へ書けたことになっている"
+	s.set_sound_on(true)
+	var after := FileAccess.get_file_as_string(path)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	if after != old:
+		return "Web なのに user:// のファイルを書き換えた"
+	return ""
+
+
 # AC-10: 全ホールの solution と ±5 の 9 通りが入る。練習の 2 ホールも入る。
 func test_course_solutions() -> String:
 	var store := CourseStore.load_file()

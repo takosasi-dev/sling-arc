@@ -8,7 +8,7 @@
   <img src="docs/play.gif" width="300" alt="プレイの様子。引っ張って撃った探査機が惑星にぶつかり、狙い直した 2 発目が 2 つの惑星の間で曲がってゴールに入る">
 </p>
 
-> v0.1.0。引っ張りの強さや予測線の長さなどの調整値は、まだ人に遊んでもらって決めた値ではありません。
+> v0.1.1。引っ張りの強さや予測線の長さなどの調整値は、まだ人に遊んでもらって決めた値ではありません。
 
 ## 遊び方
 
@@ -57,6 +57,9 @@ godot --headless --script res://tests/run_tests.gd
 
 # Web 書き出し(書き出しテンプレート 4.7.2 が要る)
 godot --headless --export-release "Web" build/web/index.html
+
+# 書き出しを窓の出ない Chrome・Edge で開いて、保存を確かめる(Node.js 22 以上と Python が要る)
+node tests/web_storage.mjs
 
 # コースを作り直す(data/courses.json を上書き。約 7 分)
 godot --headless --script res://tools/gen_courses.gd
