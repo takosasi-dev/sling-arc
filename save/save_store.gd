@@ -11,7 +11,7 @@ const KEEP_DAYS := 7
 const WEB_KEY := "sling-arc/save"
 # 使えない時(保存を止めたブラウザなど)は投げずに null / false を返す
 const JS_READ := "(() => { try { return localStorage.getItem('%s'); } catch (e) { return null; } })()" % WEB_KEY
-const JS_WRITE := "(() => { try { localStorage.setItem('%s', %%s); return true; } catch (e) { return false; } })()" % WEB_KEY
+const JS_WRITE := "(() => { try { localStorage.setItem('%s', %%s); return 'ok'; } catch (e) { return 'no'; } })()" % WEB_KEY  # 書けたかは文字で返す(JS の true は Web で bool として届かない)
 
 var path: String
 var data: Dictionary = {}
@@ -65,7 +65,7 @@ func save_data() -> bool:
 	var text := JSON.stringify(data, "", false)
 	if _web:
 		var ok: Variant = JavaScriptBridge.eval(JS_WRITE % JSON.stringify(text), true)
-		return ok is bool and ok
+		return ok is String and ok == "ok"
 	var f := FileAccess.open(path, FileAccess.WRITE)
 	if f == null:
 		return false
